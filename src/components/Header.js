@@ -143,10 +143,7 @@ export default function Header() {
               ),
             ]
           ) : (
-            <Button
-              variant="contained"
-              className={classes.installMetaMaskBtn}
-            >
+            <Button variant="contained" className={classes.installMetaMaskBtn}>
               Install MetaMask
             </Button>
           )}

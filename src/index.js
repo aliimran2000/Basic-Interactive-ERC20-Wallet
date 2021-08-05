@@ -6,13 +6,21 @@ import reportWebVitals from "./reportWebVitals";
 import Header from "./components/Header";
 import { Provider } from "react-redux";
 import store from "./store/status/status";
+import {ABI} from "./resources/abi"
+import {Contract_Address} from "./resources/address"
+import Web3 from "web3";
+
+
+  let web3 = new Web3(Web3.givenProvider || 'http://localhost:8545')
+
+  const Contract = new web3.eth.Contract(ABI, Contract_Address)
 
 
 ReactDOM.render(
   <React.StrictMode>
-    <Provider store={store}>
+    <Provider store={store} >
       <Header />
-      <App />
+      <App web3obj={web3} Contract={Contract}/>
     </Provider>
   </React.StrictMode>,
   document.getElementById("root")
