@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useLayoutEffect } from "react";
 import Web3 from "web3";
 import { makeStyles } from "@material-ui/core/styles";
 //import CssBaseline from "@material-ui/core/CssBaseline";
@@ -7,11 +7,19 @@ import Grid from "@material-ui/core/Grid";
 import Card from "@material-ui/core/Card";
 import coin from "./resources/coin.png";
 import { useDispatch, useSelector } from "react-redux";
-import { setAddress, setContract } from "./store/status/accountslice";
+import { init_BlockchainArtifacts } from "./store/status/Blockchainslice";
 //import { useState } from "react";
-import { ABI } from "./resources/abi";
-
+import Button from "@material-ui/core/Button";
+import ButtonGroup from "@material-ui/core/ButtonGroup";
 const useStyles = makeStyles((theme) => ({
+  ButtonRoot: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    "& > *": {
+      margin: theme.spacing(1),
+    },
+  },
   root: {
     flexGrow: 1,
     background: "linear-gradient(45deg, #08CAB2 15%,#080402 90%)",
@@ -32,26 +40,32 @@ function App() {
   const dispatch = useDispatch();
   const classes = useStyles();
   const status = useSelector((state) => state.status);
-  const Account = useSelector((state) => state.Account);
-  
-  var web3 = new Web3("http://localhost:8545");
-  const setupBlockChainConnection = async () => {
-    if (status.metmask === "true") {
-      let ContractObj = await new web3.eth.Contract(
-        ABI,
-        "0x12bACd9F9e2AC345646C31356A522F83eE234c98"
-      );
+  const BlockChain = useSelector((state) => state.BlockChain);
+  const [Account, setAccount] = useState(0);
 
-      dispatch(setContract(ContractObj));
-      dispatch(setAddress(ContractObj.options.address));
-
-      console.log("Account 2 : ", Account);
+  const GetAccountInfo = async () => {
+    if (Account === 0 || Account === null) {
+      try {
+        window.ethereum.enable().then((val) => {
+          setAccount(val);
+        });
+      } catch (error) {
+        setAccount(null);
+      }
     }
   };
 
   useEffect(() => {
-    setupBlockChainConnection();
-  }, []);
+    async function initilize_blockchain() {
+      new Promise((resolve, reject) => {
+        dispatch(init_BlockchainArtifacts());
+        resolve();
+      });
+    }
+
+    initilize_blockchain();
+    GetAccountInfo();
+  }, [Account]);
 
   return (
     <div className={classes.root}>
@@ -75,10 +89,12 @@ function App() {
             Ali's Wallet
           </Typography>
           <Typography variant="h5" className={classes.text}>
-            {Account.Adress}
+            {BlockChain.Contract !== null
+              ? BlockChain.Contract.options.address
+              : "awaiting data"}
           </Typography>
-          <Typography variant="h5" className={classes.text}>
-            {web3.eth.getBalance(Account.Adress)}
+          <Typography variant="h4" className={classes.text}>
+            {Account !== 0 ? Account : "Not found"}
           </Typography>
         </Grid>
 
@@ -86,6 +102,18 @@ function App() {
           <Card>
             {status.approved === "true" ? "connected" : "not connected"}
           </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <ButtonGroup
+            variant="contained"
+            color="primary"
+            aria-label="contained primary button group"
+          >
+            <Button>Top Up</Button>
+            <Button>Send Ether</Button>
+            <Button>Disconnected</Button>
+          </ButtonGroup>
         </Grid>
       </Grid>
     </div>

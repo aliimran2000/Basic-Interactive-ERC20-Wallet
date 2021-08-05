@@ -1,12 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 import statusReducer from './statusslice';
-import accountReducer from './accountslice';
+import BlockChainReducer from './Blockchainslice';
 
 
 export default configureStore({
   reducer: {
     status : statusReducer,
-    Account : accountReducer
+    BlockChain : BlockChainReducer
   },
 });
 
