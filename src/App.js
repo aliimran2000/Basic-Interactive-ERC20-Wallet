@@ -49,6 +49,21 @@ const useStyles = makeStyles((theme) => ({
       background: "linear-gradient(45deg, #5adbdb 30%,#22a846 90%)",
     },
   },
+  SignButton: {
+    marginTop: 3,
+    marginRight: theme.spacing(2),
+    background: "linear-gradient(45deg, #f2ee02 30%, #0a0a0a 90%)",
+    boxShadow: "0 3px 5px 2px rgba(219, 200, 55) ",
+    borderRadius: 60,
+    border: 0,
+    color: "white",
+    height: 35,
+    fontSize: 10,
+    padding: "0 30px",
+    "&:hover": {
+      background: "linear-gradient(45deg, #0a0a0a 30%,#f2ee02 90%)",
+    },
+  },
   root: {
     flexGrow: 1,
     background: "linear-gradient(45deg, #08CAB2 15%,#080402 90%)",
@@ -73,13 +88,40 @@ function App(props) {
   const [ButtonAction, setButton] = useState(0);
   const [transaction, setTransStat] = useState(0);
   const [Amount, setAmount] = useState(0);
-  const [TransactionAddress, setTrxAddr] = useState(0);
+  const [TransactionAddress, setTrxAddr] = useState("");
+  
+
+  const SignTransaction = async () => {
+    
+    var rawTransaction = {
+      from: Account.address[0],
+      to: TransactionAddress,
+      value: props.web3obj.utils.toHex(
+        props.web3obj.utils.toWei(Amount, "ether")
+      ),//check transaction failure here
+      chainId: 1337,
+    };
+    
+
+    console.log("Raw transaction created",rawTransaction)
+
+    props.web3obj.eth
+      .sendTransaction(rawTransaction)
+      .then((val) => {
+        console.log("SUCCES => Transaction Result :,", val);
+        setTransStat(transaction + 1);
+      })
+      .catch((error) => {
+        console.log("FAILED => Transaction Result :,", error);
+      });
+  };
 
   const VerifyTransaction = async () => {
-    console.log('STARTED');
-    let OK = props.web3obj.utils.isAddress((TransactionAddress));
+    console.log("STARTED");
+
+    let OK = props.web3obj.utils.isAddress(TransactionAddress);
     console.log(OK);
-    if (!OK) {
+    if (TransactionAddress === Account.address|| !OK) {
       return;
     }
 
@@ -111,14 +153,45 @@ function App(props) {
   const TransactionButton = (val) => {
     switch (val) {
       case 1:
-        //sign transaction
-        return "transaction verified";
+        return (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              flexDirection: "column",
+            }}
+          >
+            <Typography variant="caption" align="center" marginBottom={2}>
+              The transaction has to be signed with your private key
+            </Typography>
+
+            <Button
+              className={classes.SignButton}
+              onClick={() => {
+                SignTransaction();
+              }}
+            >
+              Sign Transaction
+            </Button>
+          </div>
+        );
       case 2:
-        //confirm transaction
-        return null;
+        return (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              flexDirection: "column",
+            }}
+          >
+            <Typography variant="outline" align="center" marginBottom={2}>
+              The tranction was succesfull
+            </Typography>
+          </div>
+        );
 
       default:
-        //verify transaction
+        
         return (
           <div
             style={{
@@ -214,7 +287,17 @@ function App(props) {
                 justifyContent: "center",
               }}
             >
-              <Button color="secondary" variant="contained">
+              <Button
+                color="secondary"
+                variant="contained"
+                onClick={() => {
+                  console.log("clicked");
+                  setButton(0);
+                  setTransStat(0);
+                  setTrxAddr(0);
+                  setAmount(0);
+                }}
+              >
                 Cancel Transaction
               </Button>
             </CardContent>
