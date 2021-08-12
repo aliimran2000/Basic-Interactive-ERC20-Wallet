@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-
 import { makeStyles } from "@material-ui/core/styles";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -8,6 +7,7 @@ import Button from "@material-ui/core/Button";
 import IconButton from "@material-ui/core/IconButton";
 import MenuIcon from "@material-ui/icons/Menu";
 import { setMetmask, setApproved } from "../store/status/statusslice";
+import { setAccountAddress } from "../store/status/Accountslice";
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
 
@@ -66,9 +66,11 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Header() {
+export default function Header(props) {
   const classes = useStyles();
   let status = useSelector((state) => state.status);
+  let AccountSlice = useSelector((AccountSlice) => AccountSlice.AccountSlice);
+
   let oldStatus = status;
   const dispatch = useDispatch();
   const [Done, setDone] = useState(0);
@@ -83,20 +85,10 @@ export default function Header() {
   const ConnectToBrowserInstance = async function () {
     if (typeof window.ethereum !== "undefined") {
       dispatch(setMetmask("true"));
-      try {
-        window.ethereum.enable().then(async () => {
-          dispatch(setApproved("true"));
-        });
-      } catch (e) {
-        dispatch(setMetmask("true"));
-      }
     } else {
       alert("You have to install MetaMask to continue");
     }
   };
-
-  // const CreateContract= async function (){
-  // };
 
   useEffect(() => {
     ConnectToBrowserInstance();
@@ -122,7 +114,7 @@ export default function Header() {
 
           {status.metmask === "true" ? (
             [
-              status.approved === "true" ? (
+              AccountSlice.AccountAddress !== null ? (
                 <Button
                   variant="contained"
                   className={classes.connectedButton}
@@ -134,9 +126,29 @@ export default function Header() {
                 <Button
                   variant="contained"
                   className={classes.connectButton}
-                  onClick={async () =>
-                    await window.ethereum.send("eth_requestAccounts")
-                  }
+                  onClick={async () => {
+                    try {
+                      window.ethereum.enable().then(async () => {
+                        if (status.approved === "false") {
+                          window.ethereum
+                            .request({
+                              method: "eth_requestAccounts",
+                            })
+                            .then(async (value) => {
+                              dispatch(setAccountAddress(value[0]));
+                              dispatch(setApproved("true"));
+                            })
+                            .catch((err) => {
+                              dispatch(setApproved("false"));
+                            });
+
+                          setDone(true);
+                        }
+                      });
+                    } catch (e) {
+                      console.log("Connection Denied");
+                    }
+                  }}
                 >
                   Connect
                 </Button>
